@@ -1,0 +1,85 @@
+﻿<Window x:Class="MyMusic.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MyMusic.Wpf"
+        xmlns:models="clr-namespace:MyMusic.Wpf.Models"
+        xmlns:controls="clr-namespace:MyMusic.Wpf.Controls"
+				xmlns:converter="clr-namespace:MyMusic.Wpf.Converters"
+				xmlns:helpers="clr-namespace:MyMusic.Wpf.Helpers"
+        mc:Ignorable="d"
+				d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel}"
+				x:Name="mainWindow"
+        Title="MainWindow" Height="450" Width="800" Loaded="Window_Loaded">
+	<Window.Resources>
+		<BooleanToVisibilityConverter x:Key="boolToVisibility"/>
+		<converter:InverseBoolToVisibilityConverter x:Key="invBoolToVisibility"/>
+		<converter:Mp3ViewToBoolConverter x:Key="mp3ViewToBool"/>
+		<converter:Mp3ViewToVisibilityConverter x:Key="mp3ViewToVisibility"/>
+	</Window.Resources>
+
+	<Grid x:Name="LayoutRoot">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+
+		<controls:TabControlEx Grid.Row="1" EnableSearchBox="{Binding Mp3View.IsLoaded, UpdateSourceTrigger=PropertyChanged}"													 
+													 SearchText="{Binding Mp3View.SearchText,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+			<TabItem Header="Now Playing" Width="100" Height="30">
+				<controls:Player DataContext="{Binding PlayerViewModel}" x:Name="player"/>
+			</TabItem>
+
+			<TabItem Header="All Files" Width="100" Height="30">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+					</Grid.RowDefinitions>
+
+					<DockPanel LastChildFill="True" HorizontalAlignment="Stretch" Grid.Row="0" Margin="5">
+						<ToggleButton Width="80px" Command="{Binding ShowListCommand}" IsChecked="{Binding Mp3View.CurrentView, Converter={StaticResource mp3ViewToBool}, ConverterParameter=List}">List</ToggleButton>
+						<ToggleButton Width="80px" Command="{Binding ShowArtistCommand}" IsChecked="{Binding Mp3View.CurrentView, Converter={StaticResource mp3ViewToBool}, ConverterParameter=Artist}">Artists</ToggleButton>
+						<ToggleButton Width="80px" Command="{Binding ShowAlbumCommand}" IsChecked="{Binding Mp3View.CurrentView, Converter={StaticResource mp3ViewToBool}, ConverterParameter=Album}">Albums</ToggleButton>
+
+						<ComboBox Width="130px" ItemsSource="{Binding Source={helpers:EnumBindingSource EnumType=models:SortOptions}}"
+											SelectedItem="{Binding Path=Mp3View.CurrentSortOption}">
+						</ComboBox>
+						<TextBlock Text=""/>
+					</DockPanel>
+					
+					<controls:Playlist x:Name="dgFiles" Grid.Row="1" EnableContextMenu="True" 
+														 Visibility="{Binding  Mp3View.CurrentView, Mode=OneWay, Converter={StaticResource mp3ViewToVisibility}, ConverterParameter=ListView}"  
+														 Mp3FileSelected="dgFiles_Mp3FileSelected" 
+														 PlayAtEndCommand="{Binding PlayAtEndCommand}"
+														 PlayNextCommand="{Binding PlayNextCommand}"
+														 RescanCommand="{Binding RescanCommand}" SearchText="{Binding Mp3View.SearchText}"
+														 Mp3Files="{Binding  Mp3View.FilesCollection}"/>
+					<controls:TileViewList Visibility="{Binding Mp3View.CurrentView, Mode=OneWay, Converter={StaticResource mp3ViewToVisibility}, ConverterParameter=TileView}" 
+																 PlayCommand="{Binding PlayCategoryCommand}" SearchText="{Binding Mp3View.SearchText}"
+																 SearchCommand="{Binding Mp3View.SearchCommand}"
+																 Grid.Row="1" Mp3Files="{Binding  Mp3View.CategoryCollection}"/>
+
+				</Grid>
+			</TabItem>
+		</controls:TabControlEx>
+
+		<DockPanel LastChildFill="True" HorizontalAlignment="Stretch" Grid.Row="2" Margin="4">
+			<StatusBarItem>
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{Binding Mp3View.AllFiles.Count, Mode=OneWay, StringFormat=n0}"/>
+					<TextBlock Margin="3,0,0,0">files</TextBlock>
+					<TextBlock Text="|" Margin="4,0,4,0"/>
+					<TextBlock>loaded in</TextBlock>
+					<TextBlock Margin="3,0,0,0" Text="{Binding Mp3View.LoadTime, Mode=OneWay}"/>
+				</StackPanel>
+			</StatusBarItem>
+			<StatusBarItem DockPanel.Dock="Right">
+				<Hyperlink Command="{Binding SettingsCommand}" CommandParameter="{Binding ElementName=mainWindow}">Settings...</Hyperlink>
+			</StatusBarItem>
+			<TextBlock Text=""/>
+		</DockPanel>
+	</Grid>
+</Window>
